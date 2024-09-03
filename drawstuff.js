@@ -461,62 +461,62 @@ function fillPoly(imagedata,vArray) {
 // returns altered x and y coords in vertex array
 
 
-function projectPoly(imagedata, poly, view) {
-    const theta = Math.PI / 4; // 45 degrees in radians
-    const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-    
-    var eyePointSlope, denom, isectT, ctrToIsect;
-    var planeCenter = Vector.add(view.eye, Vector.normalize(view.at));
-    var planeD = -Vector.dot(view.at, planeCenter);
-    var num = -Vector.dot(view.at, view.eye) - planeD;
-    var planeX = Vector.normalize(Vector.cross(view.up, view.at));
-    var planeY = Vector.normalize(Vector.cross(planeX, view.at));
-    var w = imagedata.width, h = imagedata.height;
-    
-    for (var v = 0; v < poly.length; v++) {
-        eyePointSlope = Vector.subtract(new Vector(poly[v].x, poly[v].y, poly[v].z), view.eye);
-        denom = Vector.dot(view.at, eyePointSlope);
-        
-        if (denom == 0) {
-            console.error("projectPoly: one vertex doesn't intersect!");
-            poly = [];
-            break;
-        } else {
-            isectT = num / denom;
-            if (isectT < 0) {
-                console.error("one vertex behind eye!");
-                poly = [];
-                break;
-            } else {
-                ctrToIsect = Vector.subtract(Vector.add(view.eye, Vector.scale(isectT, eyePointSlope)), planeCenter);
-                // Apply rotation here
-                let x = Vector.dot(planeX, ctrToIsect) * w / 2;
-                let y = Vector.dot(planeY, ctrToIsect) * h / 2;
-                // Rotate coordinates
-                poly[v].x = cosTheta * x + sinTheta * y + w / 2;
-                poly[v].y = -sinTheta * x + cosTheta * y + h / 2;
-            }
-        }
-    }
-}
-
-
-
 // function projectPoly(imagedata, poly, view) {
-//     var rotationMatrix = getRotationMatrix(view.angleX, view.angleY, view.angleZ);  // 生成旋转矩阵
-//     var projectionMatrix = getPerspectiveProjectionMatrix(view.fov, imagedata.width / imagedata.height, view.near, view.far);  // 生成投影矩阵
-
+//     const theta = Math.PI / 4; // 45 degrees in radians
+//     const cosTheta = Math.cos(theta);
+//     const sinTheta = Math.sin(theta);
+    
+//     var eyePointSlope, denom, isectT, ctrToIsect;
+//     var planeCenter = Vector.add(view.eye, Vector.normalize(view.at));
+//     var planeD = -Vector.dot(view.at, planeCenter);
+//     var num = -Vector.dot(view.at, view.eye) - planeD;
+//     var planeX = Vector.normalize(Vector.cross(view.up, view.at));
+//     var planeY = Vector.normalize(Vector.cross(planeX, view.at));
+//     var w = imagedata.width, h = imagedata.height;
+    
 //     for (var v = 0; v < poly.length; v++) {
-//         // 将世界坐标转换为旋转后的坐标
-//         let rotated = multiplyMatrixVector(rotationMatrix, new Vector(poly[v].x, poly[v].y, poly[v].z));
-//         // 应用投影变换
-//         let projected = multiplyMatrixVector(projectionMatrix, rotated);
-//         // 转换到屏幕空间
-//         poly[v].x = projected.x * imagedata.width / 2 + imagedata.width / 2;
-//         poly[v].y = projected.y * imagedata.height / 2 + imagedata.height / 2;
+//         eyePointSlope = Vector.subtract(new Vector(poly[v].x, poly[v].y, poly[v].z), view.eye);
+//         denom = Vector.dot(view.at, eyePointSlope);
+        
+//         if (denom == 0) {
+//             console.error("projectPoly: one vertex doesn't intersect!");
+//             poly = [];
+//             break;
+//         } else {
+//             isectT = num / denom;
+//             if (isectT < 0) {
+//                 console.error("one vertex behind eye!");
+//                 poly = [];
+//                 break;
+//             } else {
+//                 ctrToIsect = Vector.subtract(Vector.add(view.eye, Vector.scale(isectT, eyePointSlope)), planeCenter);
+//                 // Apply rotation here
+//                 let x = Vector.dot(planeX, ctrToIsect) * w / 2;
+//                 let y = Vector.dot(planeY, ctrToIsect) * h / 2;
+//                 // Rotate coordinates
+//                 poly[v].x = cosTheta * x + sinTheta * y + w / 2;
+//                 poly[v].y = -sinTheta * x + cosTheta * y + h / 2;
+//             }
+//         }
 //     }
 // }
+
+
+
+function projectPoly(imagedata, poly, view) {
+    var rotationMatrix = getRotationMatrix(view.angleX, view.angleY, view.angleZ);  // 生成旋转矩阵
+    var projectionMatrix = getPerspectiveProjectionMatrix(view.fov, imagedata.width / imagedata.height, view.near, view.far);  // 生成投影矩阵
+
+    for (var v = 0; v < poly.length; v++) {
+        // 将世界坐标转换为旋转后的坐标
+        let rotated = multiplyMatrixVector(rotationMatrix, new Vector(poly[v].x, poly[v].y, poly[v].z));
+        // 应用投影变换
+        let projected = multiplyMatrixVector(projectionMatrix, rotated);
+        // 转换到屏幕空间
+        poly[v].x = projected.x * imagedata.width / 2 + imagedata.width / 2;
+        poly[v].y = projected.y * imagedata.height / 2 + imagedata.height / 2;
+    }
+}
 
     
 
