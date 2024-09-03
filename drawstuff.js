@@ -501,21 +501,41 @@ function fillPoly(imagedata,vArray) {
 //     }
 // }
 
-
-
 function projectPoly(imagedata, poly, view) {
-    var rotationMatrix = getRotationMatrix(view.angleX, view.angleY, view.angleZ);  // 生成旋转矩阵
-    var projectionMatrix = getPerspectiveProjectionMatrix(view.fov, imagedata.width / imagedata.height, view.near, view.far);  // 生成投影矩阵
+    var planeCenter = Vector.add(view.eye, Vector.normalize(view.at));
+    var planeX = Vector.normalize(Vector.cross(view.up, view.at));
+    var planeY = Vector.normalize(Vector.cross(planeX, view.at));
 
     for (var v = 0; v < poly.length; v++) {
-        // 将世界坐标转换为旋转后的坐标
-        let rotated = multiplyMatrixVector(rotationMatrix, new Vector(poly[v].x, poly[v].y, poly[v].z));
-        // 应用投影变换
-        let projected = multiplyMatrixVector(projectionMatrix, rotated);
-        // 转换到屏幕空间
-        poly[v].x = projected.x * imagedata.width / 2 + imagedata.width / 2;
-        poly[v].y = projected.y * imagedata.height / 2 + imagedata.height / 2;
+        // Distort each vertex based on its position
+        let factor = 0.2;  // Distortion factor
+        let distortedZ = poly[v].z + (poly[v].x * factor * (v % 2 == 0 ? 1 : -1));
+        
+        // Calculate the projected position
+        let eyeToPoint = Vector.subtract(new Vector(poly[v].x, poly[v].y, distortedZ), view.eye);
+        let dotProduct = Vector.dot(view.at, eyeToPoint);
+        if (dotProduct == 0) dotProduct = 1;  // Avoid division by zero
+
+        let t = Vector.dot(view.at, Vector.subtract(planeCenter, view.eye)) / dotProduct;
+        let projection = Vector.add(view.eye, Vector.scale(t, eyeToPoint));
+        
+        // Convert 3D point to 2D using the canvas dimensions
+        let screenX = Vector.dot(planeX, projection) * imagedata.width / 2 + imagedata.width / 2;
+        let screenY = Vector.dot(planeY, projection) * imagedata.height / 2 + imagedata.height / 2;
+
+        poly[v].x = screenX;
+        poly[v].y = screenY;
     }
+
+    // Draw the distorted polygon on the canvas
+    var ctx = imagedata.getContext('2d');
+    ctx.beginPath();
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for (var i = 1; i < poly.length; i++) {
+        ctx.lineTo(poly[i].x, poly[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
 }
 
     
